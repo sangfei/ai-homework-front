@@ -21,6 +21,11 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
     { id: 'settings', label: '系统设置', icon: Settings },
   ];
 
+  const tools = [
+    { id: 'ai-correction', label: '智能批改', icon: Edit },
+    { id: 'notifications', label: '精准通知', icon: MessageSquare },
+  ];
+
   const handleNavigation = (itemId: string) => {
     onTabChange(itemId);
     
@@ -86,6 +91,29 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
                 className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                   isActive
                     ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600'
+                    : 'text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <Icon className="w-5 h-5 mr-3" />
+                {item.label}
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+      
+      <div className="p-4 border-t">
+        <h2 className="text-sm font-medium text-gray-500 mb-3">智能工具</h2>
+        <nav className="space-y-1">
+          {tools.map((item) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.id}
+                onClick={() => handleNavigation(item.id)}
+                className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  activeTab === item.id
+                    ? 'bg-blue-50 text-blue-700'
                     : 'text-gray-700 hover:bg-gray-50'
                 }`}
               >
