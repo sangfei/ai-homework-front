@@ -15,21 +15,19 @@
         </div>
         
         <h2 class="brand-title">
-          智能批改作业<br />
-          高效精准促提升
+          {{ $t('login.title') }}
         </h2>
         
         <p class="brand-description">
-          基于人工智能技术，为学生提供精准的作业批改和个性化学习指导，
-          助力教育数字化转型，提升教学质量与效率。
+          {{ $t('login.subtitle') }}
         </p>
         
         <div class="brand-actions">
           <el-button type="primary" :icon="View">
-            查看演示
+            {{ $t('common.info') }}
           </el-button>
           <el-button>
-            使用指南
+            {{ $t('common.info') }}
           </el-button>
         </div>
       </div>
@@ -139,7 +137,7 @@
           
           <!-- 其他登录方式 -->
           <div class="other-login">
-            <el-divider>其他登录方式</el-divider>
+            <el-divider>{{ $t('common.info') }}</el-divider>
             <div class="social-login">
               <el-button circle :icon="ChatDotRound" />
               <el-button circle :icon="Message" />
@@ -150,7 +148,7 @@
         
         <!-- 版权信息 -->
         <div class="copyright">
-          <p>© 2025 智慧作业 版权所有</p>
+          <p>© 2025 {{ $t('dashboard.title') }} {{ $t('common.info') }}</p>
         </div>
       </div>
     </div>
@@ -158,7 +156,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
@@ -181,13 +179,12 @@ const loginOptions = computed(() => [
 ])
 
 // 表单数据
-const loginForm = reactive<LoginParams & { rememberMe?: boolean }>({
-  username: 'admin',
-  password: '123456',
+const loginForm = reactive<LoginParams>({
+  username: '',
+  password: '',
   phone: '',
   smsCode: '',
-  loginType: 'password',
-  rememberMe: false
+  loginType: 'password'
 })
 
 // 表单验证规则

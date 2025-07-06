@@ -21,36 +21,6 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
-    path: '/homework/create',
-    name: 'CreateHomework',
-    component: () => import('@/views/CreateHomeworkView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/homework/grading/:homeworkId',
-    name: 'HomeworkGrading',
-    component: () => import('@/views/HomeworkGradingView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/homework/grading/:homeworkId/student/:studentId',
-    name: 'HomeworkGradingDetail',
-    component: () => import('@/views/HomeworkGradingDetailView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/homework/grading/:homeworkId/analysis',
-    name: 'OverallAnalysis',
-    component: () => import('@/views/OverallAnalysisView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/student-report/:studentId',
-    name: 'StudentPersonalReport',
-    component: () => import('@/views/StudentPersonalReportView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
     path: '/classes',
     name: 'Classes',
     component: () => import('@/views/ClassesView.vue'),
