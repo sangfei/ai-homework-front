@@ -89,7 +89,8 @@ export class TokenRefreshManager {
             'tenant-id': tenantId,
             'Authorization': `Bearer ${accessToken}`,
             'Content-Type': 'application/json',
-            'Accept': '*/*'
+            'Accept': '*/*',
+            'Cache-Control': 'no-cache'
           },
           body: JSON.stringify({
             refreshToken: refreshToken

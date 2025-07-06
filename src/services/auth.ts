@@ -163,7 +163,8 @@ export const getTenantIdByMobile = async (mobile: string): Promise<string> => {
       {
         method: 'GET',
         headers: {
-          'Accept': '*/*'
+          'Accept': '*/*',
+          'Cache-Control': 'no-cache'
         }
       }
     );
@@ -212,9 +213,10 @@ export const performLogin = async (
       {
         method: 'POST',
         headers: {
-          'content-type': 'application/json',
+          'Content-Type': 'application/json',
           'tenant-id': tenantId,
-          'Accept': '*/*'
+          'Accept': '*/*',
+          'Cache-Control': 'no-cache'
         },
         body: JSON.stringify(loginData)
       }

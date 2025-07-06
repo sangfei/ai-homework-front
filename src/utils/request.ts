@@ -5,13 +5,24 @@ export const createAuthenticatedRequest = (url: string, options: RequestInit = {
   const token = getAccessToken();
   const tenantId = getTenantId();
   
-  const headers = {
+  // 创建新的headers对象，避免修改原始options
+  const headers: Record<string, string> = {
     'Accept': '*/*',
-    ...options.headers,
   };
 
-  // 只有在需要发送JSON数据时才设置Content-Type
-  if (options.method && ['POST', 'PUT', 'PATCH'].includes(options.method.toUpperCase())) {
+  // 复制现有的headers，但要小心处理Content-Type
+  if (options.headers) {
+    const existingHeaders = options.headers as Record<string, string>;
+    Object.keys(existingHeaders).forEach(key => {
+      // 跳过Content-Type，我们会统一处理
+      if (key.toLowerCase() !== 'content-type') {
+        headers[key] = existingHeaders[key];
+      }
+    });
+  }
+
+  // 只有在需要发送JSON数据的请求中才设置Content-Type
+  if (options.method && ['POST', 'PUT', 'PATCH'].includes(options.method.toUpperCase()) && options.body) {
     headers['Content-Type'] = 'application/json';
   }
 
