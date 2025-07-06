@@ -43,10 +43,6 @@ export const getUserProfile = async (): Promise<UserProfile> => {
       'http://localhost:48080/admin-api/system/user/profile/get',
       {
         method: 'GET',
-        headers: {
-          'content-type': 'application/json',
-          'Accept': '*/*'
-        }
       }
     );
 

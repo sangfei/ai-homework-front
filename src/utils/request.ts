@@ -6,10 +6,14 @@ export const createAuthenticatedRequest = (url: string, options: RequestInit = {
   const tenantId = getTenantId();
   
   const headers = {
-    'Content-Type': 'application/json',
     'Accept': '*/*',
     ...options.headers,
   };
+
+  // 只有在需要发送JSON数据时才设置Content-Type
+  if (options.method && ['POST', 'PUT', 'PATCH'].includes(options.method.toUpperCase())) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   // 如果有token，添加Authorization头
   if (token) {

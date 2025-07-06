@@ -163,7 +163,6 @@ export const getTenantIdByMobile = async (mobile: string): Promise<string> => {
       {
         method: 'GET',
         headers: {
-          'content-type': 'application/json',
           'Accept': '*/*'
         }
       }
