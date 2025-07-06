@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { ErrorBoundary } from './components/Debug/ErrorBoundary';
+import { LoadingDiagnostics } from './components/Debug/LoadingDiagnostics';
+import { runPageDiagnostics } from './utils/diagnostics';
 import LoginPage from './components/Auth/LoginPage';
 import Header from './components/Layout/Header';
 import Sidebar from './components/Layout/Sidebar';
@@ -19,9 +22,18 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [isInitializing, setIsInitializing] = useState(true);
+  const [initError, setInitError] = useState<string | null>(null);
 
   // 检查是否已有有效的登录状态
   useEffect(() => {
+    const initializeApp = async () => {
+      try {
+        console.log('🚀 应用初始化开始...');
+        
+        // 运行初始诊断
+        await runPageDiagnostics();
+        
     const savedToken = localStorage.getItem('accessToken');
     const savedUser = localStorage.getItem('currentUser');
     
@@ -37,6 +49,17 @@ function App() {
         localStorage.removeItem('currentUser');
       }
     }
+        
+        console.log('✅ 应用初始化完成');
+      } catch (error) {
+        console.error('❌ 应用初始化失败:', error);
+        setInitError(error instanceof Error ? error.message : '初始化失败');
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+    
+    initializeApp();
   }, []);
   const handleLogin = (userData: any) => {
     setCurrentUser(userData);
@@ -55,11 +78,38 @@ function App() {
     localStorage.removeItem('currentUser');
   };
 
+  // 如果初始化失败，显示错误页面
+  if (initError) {
+    return (
+      <div className="min-h-screen bg-red-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-red-600 text-2xl">⚠️</span>
+          </div>
+          <h1 className="text-xl font-bold text-red-900 mb-2">应用初始化失败</h1>
+          <p className="text-red-600 mb-4">{initError}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+          >
+            重新加载
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // 显示加载诊断
+  if (isInitializing) {
+    return <LoadingDiagnostics isLoading={true} />;
+  }
+
   if (!isLoggedIn) {
     return <LoginPage onLogin={handleLogin} />;
   }
 
   return (
+    <ErrorBoundary>
     <Router>
       <div className="min-h-screen bg-gray-100">
         <Routes>
@@ -143,6 +193,7 @@ function App() {
         </Routes>
       </div>
     </Router>
+    </ErrorBoundary>
   );
 }
 
