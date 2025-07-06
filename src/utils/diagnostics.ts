@@ -42,7 +42,7 @@ export class PageDiagnostics {
     const resourceStatus = {
       scripts: scripts.map(script => ({
         src: (script as HTMLScriptElement).src,
-        loaded: (script as HTMLScriptElement).readyState === 'complete'
+        loaded: (script as HTMLScriptElement).type === 'module' ? true : (script as HTMLScriptElement).readyState === 'complete'
       })),
       stylesheets: stylesheets.map(link => ({
         href: (link as HTMLLinkElement).href,
@@ -145,7 +145,7 @@ export class PageDiagnostics {
       
       // 测试API连接
       try {
-        const apiResponse = await fetch('http://localhost:48080/admin-api/system/tenant/get-id-by-mobile?mobile=test', {
+        const apiResponse = await fetch('/api/auth/user', {
           method: 'GET',
           headers: {
             'content-type': 'application/json',
