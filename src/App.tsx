@@ -89,7 +89,7 @@ function App() {
   // 监听Token刷新失败事件
   useEffect(() => {
     const handleTokenRefreshFailed = () => {
-      console.warn('⚠️ Token刷新失败，自动登出');
+      console.warn('⚠️ Token刷新连续失败，自动登出');
       handleLogout();
     };
 
@@ -99,6 +99,22 @@ function App() {
       window.removeEventListener('tokenRefreshFailed', handleTokenRefreshFailed);
     };
   }, []);
+
+  // 监听页面可见性变化，避免在后台时频繁刷新
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && isLoggedIn) {
+        console.log('📱 页面重新可见，检查认证状态');
+        // 页面重新可见时，可以选择性地检查Token状态
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isLoggedIn]);
 
   // 如果初始化失败，显示错误页面
   if (initError) {

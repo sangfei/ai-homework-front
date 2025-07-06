@@ -146,7 +146,7 @@ export const initializeAuth = (): void => {
   
   // 如果有有效的Token，启动自动刷新
   if (savedAccessToken && savedRefreshToken) {
-    console.log('🔐 认证数据已恢复，启动自动刷新Token');
+    console.log('🔐 认证数据已恢复，将在30秒后启动自动刷新Token');
     tokenRefreshManager.startAutoRefresh();
   } else {
     console.log('🔐 未找到有效的认证数据');

@@ -17,9 +17,11 @@ export class TokenRefreshManager {
   private static instance: TokenRefreshManager;
   private refreshTimer: NodeJS.Timeout | null = null;
   private isRefreshing = false;
-  private refreshInterval = 600000; // 10分钟（600000毫秒）
+  private refreshInterval = 10 * 60 * 1000; // 10分钟（600000毫秒）
   private maxRetries = 3;
   private retryDelay = 5000; // 5秒
+  private lastRefreshTime = 0; // 记录上次刷新时间
+  private minRefreshInterval = 60000; // 最小刷新间隔1分钟，防止频繁刷新
 
   static getInstance(): TokenRefreshManager {
     if (!TokenRefreshManager.instance) {
@@ -34,16 +36,16 @@ export class TokenRefreshManager {
   startAutoRefresh(): void {
     this.stopAutoRefresh(); // 先停止现有的定时器
     
-    console.log('🔄 启动自动刷新Token定时任务，间隔:', this.refreshInterval / 1000, '秒');
+    console.log('🔄 启动自动刷新Token定时任务，间隔:', this.refreshInterval / 60000, '分钟');
     
     this.refreshTimer = setInterval(async () => {
       await this.performTokenRefresh();
     }, this.refreshInterval);
 
-    // 立即执行一次检查
+    // 延迟30秒后执行第一次检查，避免页面加载时立即刷新
     setTimeout(() => {
       this.performTokenRefresh();
-    }, 1000);
+    }, 30000);
   }
 
   /**
@@ -66,13 +68,19 @@ export class TokenRefreshManager {
       return false;
     }
 
+    // 检查是否距离上次刷新时间太短
+    const now = Date.now();
+    if (this.lastRefreshTime > 0 && (now - this.lastRefreshTime) < this.minRefreshInterval) {
+      console.log('🔄 距离上次刷新时间太短，跳过本次刷新');
+      return false;
+    }
+
     const refreshToken = storage.getAuthData('refreshToken');
     const accessToken = storage.getAuthData('accessToken');
     const tenantId = storage.getAuthData('tenantId');
 
     if (!refreshToken || !accessToken || !tenantId) {
-      console.warn('⚠️ 缺少必要的认证信息，停止自动刷新');
-      this.stopAutoRefresh();
+      console.warn('⚠️ 缺少必要的认证信息，但不强制登出');
       return false;
     }
 
@@ -115,6 +123,9 @@ export class TokenRefreshManager {
       // 更新Token
       this.updateTokens(result.data.accessToken, result.data.refreshToken);
       
+      // 更新最后刷新时间
+      this.lastRefreshTime = Date.now();
+      
       console.log('✅ Token刷新成功');
       return true;
 
@@ -129,8 +140,8 @@ export class TokenRefreshManager {
         }, this.retryDelay);
         return false;
       } else {
-        console.error('❌ Token刷新重试次数已达上限，停止自动刷新');
-        this.handleRefreshFailure();
+        console.error('❌ Token刷新重试次数已达上限，但继续保持登录状态');
+        // 不立即登出，而是等待下次定时刷新
         return false;
       }
     } finally {
@@ -149,29 +160,62 @@ export class TokenRefreshManager {
     // 更新存储
     storage.setAuthData('accessToken', accessToken);
     storage.setAuthData('refreshToken', refreshToken);
+    
+    // 刷新成功，重置失败计数
+    this.resetFailureCount();
 
     console.log('🔄 Token已更新到全局变量和存储');
   }
 
   /**
-   * 处理刷新失败
+   * 处理刷新失败（仅在严重错误时调用）
    */
   private handleRefreshFailure(): void {
-    this.stopAutoRefresh();
+    // 只有在连续多次失败且确认Token完全无效时才执行登出
+    const consecutiveFailures = this.getConsecutiveFailureCount();
     
-    // 清除认证数据
-    storage.clearAllAuthData();
-    
-    // 通知用户重新登录
-    console.warn('⚠️ Token刷新失败，需要重新登录');
-    
-    // 可以触发全局事件或回调
-    window.dispatchEvent(new CustomEvent('tokenRefreshFailed'));
-    
-    // 跳转到登录页
-    setTimeout(() => {
-      window.location.href = '/login';
-    }, 2000);
+    if (consecutiveFailures >= 5) { // 连续5次失败才登出
+      console.warn('⚠️ Token连续多次刷新失败，执行登出');
+      
+      this.stopAutoRefresh();
+      
+      // 清除认证数据
+      storage.clearAllAuthData();
+      
+      // 通知用户重新登录
+      window.dispatchEvent(new CustomEvent('tokenRefreshFailed'));
+      
+      // 跳转到登录页
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 2000);
+    } else {
+      console.warn('⚠️ Token刷新失败，但继续尝试');
+      this.incrementFailureCount();
+    }
+  }
+
+  /**
+   * 获取连续失败次数
+   */
+  private getConsecutiveFailureCount(): number {
+    const count = localStorage.getItem('tokenRefreshFailureCount');
+    return count ? parseInt(count, 10) : 0;
+  }
+
+  /**
+   * 增加失败次数
+   */
+  private incrementFailureCount(): void {
+    const count = this.getConsecutiveFailureCount() + 1;
+    localStorage.setItem('tokenRefreshFailureCount', count.toString());
+  }
+
+  /**
+   * 重置失败次数
+   */
+  private resetFailureCount(): void {
+    localStorage.removeItem('tokenRefreshFailureCount');
   }
 
   /**
