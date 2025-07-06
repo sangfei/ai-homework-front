@@ -1,4 +1,5 @@
 import { authenticatedFetch, handleApiResponse } from '../utils/request';
+import { setUserProfile } from './auth';
 
 // 用户信息接口定义
 export interface UserProfile {
@@ -58,6 +59,9 @@ export const getUserProfile = async (): Promise<UserProfile> => {
     if (!result.data) {
       throw new Error('用户信息数据为空');
     }
+
+    // 保存用户信息到全局变量和存储
+    setUserProfile(result.data);
 
     return result.data;
   } catch (error) {

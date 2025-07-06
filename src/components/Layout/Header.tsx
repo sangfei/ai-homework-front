@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Bell, User, ChevronDown, LogOut, Settings } from 'lucide-react';
-import { clearAccessToken } from '../../services/auth';
+import { clearAccessToken, getUserProfile as getStoredUserProfile } from '../../services/auth';
 import { getUserProfile, formatUserForDisplay, type UserProfile } from '../../services/user';
 
 interface HeaderProps {
@@ -20,6 +20,15 @@ const Header: React.FC<HeaderProps> = ({ currentUser, onLogout }) => {
   // 获取用户详细信息
   useEffect(() => {
     const fetchUserProfile = async () => {
+      // 先检查是否已有存储的用户信息
+      const storedProfile = getStoredUserProfile();
+      if (storedProfile) {
+        setUserProfile(storedProfile);
+        console.log('✅ 使用已存储的用户信息');
+        return;
+      }
+      
+      // 如果没有存储的信息，则从API获取
       try {
         setProfileLoading(true);
         const profile = await getUserProfile();
@@ -33,11 +42,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, onLogout }) => {
       }
     };
 
-    // 只有在有访问令牌时才获取用户信息
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      fetchUserProfile();
-    }
+    fetchUserProfile();
   }, []);
 
   // 使用获取到的用户信息，如果没有则使用传入的currentUser

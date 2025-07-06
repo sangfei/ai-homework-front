@@ -1,3 +1,5 @@
+import { tokenRefreshManager } from './tokenRefresh';
+import type { UserProfile } from './user';
 // 认证服务
 export interface TenantResponse {
   code: number;
@@ -23,40 +25,130 @@ export interface LoginResponse {
 }
 
 // 全局变量存储访问令牌
-let globalAccessToken: string | null = null;
 let globalTenantId: string | null = null;
+let globalUserId: string | null = null;
+let globalAccessToken: string | null = null;
+let globalRefreshToken: string | null = null;
+let globalUserProfile: UserProfile | null = null;
+
+// 将全局变量暴露到window对象，方便调试和其他模块访问
+(window as any).globalAuth = {
+  getTenantId: () => globalTenantId,
+  getUserId: () => globalUserId,
+  getAccessToken: () => globalAccessToken,
+  getRefreshToken: () => globalRefreshToken,
+  getUserProfile: () => globalUserProfile
+};
 
 export const getAccessToken = (): string | null => globalAccessToken;
 export const getTenantId = (): string | null => globalTenantId;
+export const getUserId = (): string | null => globalUserId;
+export const getRefreshToken = (): string | null => globalRefreshToken;
+export const getUserProfile = (): UserProfile | null => globalUserProfile;
 
+// 设置认证数据（同时保存到全局变量和存储）
+export const setAuthData = (data: {
+  tenantId?: string;
+  userId?: string;
+  accessToken?: string;
+  refreshToken?: string;
+}): void => {
+  if (data.tenantId) {
+    globalTenantId = data.tenantId;
+    storage.setAuthData('tenantId', data.tenantId);
+  }
+  
+  if (data.userId) {
+    globalUserId = data.userId;
+    storage.setAuthData('userId', data.userId);
+  }
+  
+  if (data.accessToken) {
+    globalAccessToken = data.accessToken;
+    storage.setAuthData('accessToken', data.accessToken);
+  }
+  
+  if (data.refreshToken) {
+    globalRefreshToken = data.refreshToken;
+    storage.setAuthData('refreshToken', data.refreshToken);
+  }
+  
+  console.log('🔐 认证数据已保存到全局变量和存储');
+};
+
+// 设置用户信息
+export const setUserProfile = (profile: UserProfile): void => {
+  globalUserProfile = profile;
+  storage.setAuthData('userProfile', JSON.stringify(profile));
+  console.log('👤 用户信息已保存到全局变量和存储');
+};
+
+// 兼容旧的方法
 export const setAccessToken = (token: string): void => {
   globalAccessToken = token;
-  // 同时保存到localStorage
-  localStorage.setItem('accessToken', token);
+  storage.setAuthData('accessToken', token);
 };
 
 export const setTenantId = (tenantId: string): void => {
   globalTenantId = tenantId;
-  // 同时保存到localStorage
-  localStorage.setItem('tenantId', tenantId);
+  storage.setAuthData('tenantId', tenantId);
 };
 
+// 清除所有认证数据
 export const clearAccessToken = (): void => {
-  globalAccessToken = null;
   globalTenantId = null;
-  localStorage.removeItem('accessToken');
-  localStorage.removeItem('tenantId');
+  globalUserId = null;
+  globalAccessToken = null;
+  globalRefreshToken = null;
+  globalUserProfile = null;
+  
+  storage.clearAllAuthData();
+  
+  // 停止Token自动刷新
+  tokenRefreshManager.stopAutoRefresh();
+  
+  console.log('🔐 所有认证数据已清除');
 };
 
-// 初始化时从localStorage恢复token
+// 初始化时从存储恢复认证数据
 export const initializeAuth = (): void => {
-  const savedToken = localStorage.getItem('accessToken');
-  const savedTenantId = localStorage.getItem('tenantId');
-  if (savedToken) {
-    globalAccessToken = savedToken;
-  }
+  const savedTenantId = storage.getAuthData('tenantId');
+  const savedUserId = storage.getAuthData('userId');
+  const savedAccessToken = storage.getAuthData('accessToken');
+  const savedRefreshToken = storage.getAuthData('refreshToken');
+  const savedUserProfile = storage.getAuthData('userProfile');
+  
   if (savedTenantId) {
     globalTenantId = savedTenantId;
+  }
+  
+  if (savedUserId) {
+    globalUserId = savedUserId;
+  }
+  
+  if (savedAccessToken) {
+    globalAccessToken = savedAccessToken;
+  }
+  
+  if (savedRefreshToken) {
+    globalRefreshToken = savedRefreshToken;
+  }
+  
+  if (savedUserProfile) {
+    try {
+      globalUserProfile = JSON.parse(savedUserProfile);
+    } catch (error) {
+      console.error('解析用户信息失败:', error);
+      storage.removeAuthData('userProfile');
+    }
+  }
+  
+  // 如果有有效的Token，启动自动刷新
+  if (savedAccessToken && savedRefreshToken) {
+    console.log('🔐 认证数据已恢复，启动自动刷新Token');
+    tokenRefreshManager.startAutoRefresh();
+  } else {
+    console.log('🔐 未找到有效的认证数据');
   }
 };
 
@@ -143,7 +235,11 @@ export const performLogin = async (
     }
 
     // 保存访问令牌到全局变量
-    setAccessToken(result.data.accessToken);
+    setAuthData({
+      accessToken: result.data.accessToken,
+      refreshToken: result.data.refreshToken,
+      userId: result.data.userId
+    });
 
     return result.data;
   } catch (error) {
@@ -167,14 +263,18 @@ export const loginWithMobile = async (
     const tenantId = await getTenantIdByMobile(mobile);
     
     // 保存租户ID
-    setTenantId(tenantId);
+    setAuthData({ tenantId });
     
     // 第二步：执行登录
     const loginResult = await performLogin(mobile, password, tenantId);
+    
+    // 启动自动刷新Token
+    tokenRefreshManager.startAutoRefresh();
     
     return loginResult;
   } catch (error) {
     console.error('完整登录流程失败:', error);
     throw error;
   }
+import { storage } from '../utils/storage';
 };

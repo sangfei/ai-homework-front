@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { initializeAuth, getAccessToken, getUserProfile } from './services/auth';
 import { ErrorBoundary } from './components/Debug/ErrorBoundary';
 import { LoadingDiagnostics } from './components/Debug/LoadingDiagnostics';
 import { runPageDiagnostics } from './utils/diagnostics';
@@ -31,24 +32,35 @@ function App() {
       try {
         console.log('🚀 应用初始化开始...');
         
+        // 初始化认证状态
+        initializeAuth();
+        
         // 运行初始诊断
         await runPageDiagnostics();
         
-    const savedToken = localStorage.getItem('accessToken');
-    const savedUser = localStorage.getItem('currentUser');
-    
-    if (savedToken && savedUser) {
-      try {
-        const userData = JSON.parse(savedUser);
-        setCurrentUser(userData);
-        setIsLoggedIn(true);
-      } catch (error) {
-        console.error('恢复用户状态失败:', error);
-        // 清除无效数据
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('currentUser');
+        // 检查是否有有效的登录状态
+        const savedToken = getAccessToken();
+        const savedUserProfile = getUserProfile();
+        
+        if (savedToken && savedUserProfile) {
+          setCurrentUser({
+            name: savedUserProfile.nickname || savedUserProfile.username,
+            role: savedUserProfile.dept?.className || '教师',
+            avatar: savedUserProfile.avatar || ''
+          });
+          setIsLoggedIn(true);
+          console.log('✅ 用户登录状态已恢复');
+        } else if (savedToken) {
+          // 有Token但没有用户信息，可能需要重新获取
+          console.log('🔄 检测到Token但缺少用户信息，保持登录状态');
+          setCurrentUser({
+            name: '用户',
+            role: '教师',
+            avatar: ''
+          });
+          setIsLoggedIn(true);
+        }
       }
-    }
         
         console.log('✅ 应用初始化完成');
       } catch (error) {
@@ -64,19 +76,27 @@ function App() {
   const handleLogin = (userData: any) => {
     setCurrentUser(userData);
     setIsLoggedIn(true);
-    
-    // 保存用户信息到localStorage
-    localStorage.setItem('currentUser', JSON.stringify(userData));
   };
 
   const handleLogout = () => {
     setCurrentUser(null);
     setIsLoggedIn(false);
     setActiveTab('dashboard');
-    
-    // 清除本地存储的用户信息
-    localStorage.removeItem('currentUser');
   };
+
+  // 监听Token刷新失败事件
+  useEffect(() => {
+    const handleTokenRefreshFailed = () => {
+      console.warn('⚠️ Token刷新失败，自动登出');
+      handleLogout();
+    };
+
+    window.addEventListener('tokenRefreshFailed', handleTokenRefreshFailed);
+    
+    return () => {
+      window.removeEventListener('tokenRefreshFailed', handleTokenRefreshFailed);
+    };
+  }, []);
 
   // 如果初始化失败，显示错误页面
   if (initError) {

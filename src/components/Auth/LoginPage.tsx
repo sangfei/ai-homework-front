@@ -109,8 +109,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           name: formData.username, // 临时使用用户名，实际信息会在Header组件中获取
           role: '教师',
           avatar: '',
-          accessToken: loginResult.accessToken,
-          userId: loginResult.userId
+          ...loginResult
         });
       } else {
         // 短信登录暂时保持模拟逻辑

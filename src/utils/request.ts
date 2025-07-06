@@ -1,9 +1,4 @@
-import { getAccessToken, clearAccessToken } from '../services/auth';
-
-// 获取租户ID
-const getTenantId = (): string | null => {
-  return localStorage.getItem('tenantId');
-};
+import { getAccessToken, getTenantId, clearAccessToken } from '../services/auth';
 
 // 请求拦截器 - 自动添加认证头
 export const createAuthenticatedRequest = (url: string, options: RequestInit = {}): RequestInit => {
