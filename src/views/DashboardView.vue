@@ -274,10 +274,6 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
-import {
-  Globe, Bell, UserFilled, ArrowDown, User, Setting, SwitchButton,
-  View, Document, Check, TrendCharts, Plus, Delete
-} from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import { useAppStore } from '@/stores/app'
 
