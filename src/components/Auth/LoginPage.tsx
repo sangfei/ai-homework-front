@@ -106,8 +106,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         
         // 登录成功，传递用户信息
         onLogin({
-          name: '李老师',
-          role: '数学教师',
+          name: formData.username, // 临时使用用户名，实际信息会在Header组件中获取
+          role: '教师',
           avatar: '',
           accessToken: loginResult.accessToken,
           userId: loginResult.userId
