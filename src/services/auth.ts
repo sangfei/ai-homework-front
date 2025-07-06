@@ -24,8 +24,10 @@ export interface LoginResponse {
 
 // 全局变量存储访问令牌
 let globalAccessToken: string | null = null;
+let globalTenantId: string | null = null;
 
 export const getAccessToken = (): string | null => globalAccessToken;
+export const getTenantId = (): string | null => globalTenantId;
 
 export const setAccessToken = (token: string): void => {
   globalAccessToken = token;
@@ -33,16 +35,28 @@ export const setAccessToken = (token: string): void => {
   localStorage.setItem('accessToken', token);
 };
 
+export const setTenantId = (tenantId: string): void => {
+  globalTenantId = tenantId;
+  // 同时保存到localStorage
+  localStorage.setItem('tenantId', tenantId);
+};
+
 export const clearAccessToken = (): void => {
   globalAccessToken = null;
+  globalTenantId = null;
   localStorage.removeItem('accessToken');
+  localStorage.removeItem('tenantId');
 };
 
 // 初始化时从localStorage恢复token
 export const initializeAuth = (): void => {
   const savedToken = localStorage.getItem('accessToken');
+  const savedTenantId = localStorage.getItem('tenantId');
   if (savedToken) {
     globalAccessToken = savedToken;
+  }
+  if (savedTenantId) {
+    globalTenantId = savedTenantId;
   }
 };
 
@@ -151,6 +165,9 @@ export const loginWithMobile = async (
   try {
     // 第一步：获取租户ID
     const tenantId = await getTenantIdByMobile(mobile);
+    
+    // 保存租户ID
+    setTenantId(tenantId);
     
     // 第二步：执行登录
     const loginResult = await performLogin(mobile, password, tenantId);
