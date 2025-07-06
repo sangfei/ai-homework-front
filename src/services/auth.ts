@@ -1,5 +1,6 @@
 import { tokenRefreshManager } from './tokenRefresh';
 import type { UserProfile } from './user';
+import { storage } from '../utils/storage';
 // 认证服务
 export interface TenantResponse {
   code: number;
