@@ -74,8 +74,10 @@ function App() {
   }, []);
 
   const handleLogin = (userData: any) => {
+    console.log('🔐 处理登录回调，用户数据:', userData);
     setCurrentUser(userData);
     setIsLoggedIn(true);
+    console.log('✅ 登录状态已更新');
   };
 
   const handleLogout = () => {

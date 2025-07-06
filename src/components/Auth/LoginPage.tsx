@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, User, Lock, Phone, MessageSquare, CheckCircle, AlertCircle } from 'lucide-react';
 import { loginWithMobile, initializeAuth } from '../../services/auth';
 
@@ -7,6 +8,7 @@ interface LoginPageProps {
 }
 
 const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
+  const navigate = useNavigate();
   const [loginType, setLoginType] = useState<'password' | 'sms'>('password');
   const [formData, setFormData] = useState({
     username: 'admin',
@@ -104,21 +106,35 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         // 使用真实的登录API
         const loginResult = await loginWithMobile(formData.username, formData.password);
         
-        // 登录成功，传递用户信息
-        onLogin({
+        // 准备用户信息
+        const userData = {
           name: formData.username, // 临时使用用户名，实际信息会在Header组件中获取
           role: '教师',
           avatar: '',
           ...loginResult
-        });
+        };
+        
+        // 调用父组件的登录回调
+        onLogin(userData);
+        
+        // 登录成功后跳转到首页
+        console.log('✅ 登录成功，跳转到首页');
+        navigate('/', { replace: true });
       } else {
         // 短信登录暂时保持模拟逻辑
         if (formData.phone === '13800138000' && formData.smsCode === '123456') {
-          onLogin({
+          const userData = {
             name: '李老师',
             role: '数学教师',
             avatar: ''
-          });
+          };
+          
+          // 调用父组件的登录回调
+          onLogin(userData);
+          
+          // 登录成功后跳转到首页
+          console.log('✅ 短信登录成功，跳转到首页');
+          navigate('/', { replace: true });
         } else {
           setLoginError('手机号或验证码错误');
         }

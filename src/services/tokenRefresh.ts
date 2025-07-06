@@ -17,7 +17,7 @@ export class TokenRefreshManager {
   private static instance: TokenRefreshManager;
   private refreshTimer: NodeJS.Timeout | null = null;
   private isRefreshing = false;
-  private refreshInterval = 10 * 60 * 1000; // 10分钟
+  private refreshInterval = 600000; // 10分钟（600000毫秒）
   private maxRetries = 3;
   private retryDelay = 5000; // 5秒
 
