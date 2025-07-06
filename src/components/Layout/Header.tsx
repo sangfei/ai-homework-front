@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Bell, User, ChevronDown, LogOut, Settings } from 'lucide-react';
+import { clearAccessToken } from '../../services/auth';
 
 interface HeaderProps {
   currentUser: {
@@ -12,6 +13,15 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ currentUser, onLogout }) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
+
+  const handleLogout = () => {
+    // 清除访问令牌
+    clearAccessToken();
+    // 调用父组件的登出回调
+    if (onLogout) {
+      onLogout();
+    }
+  };
 
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4">
@@ -67,7 +77,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser, onLogout }) => {
                 </button>
                 <hr className="my-1" />
                 <button
-                  onClick={onLogout}
+                  onClick={handleLogout}
                   className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center"
                 >
                   <LogOut className="w-4 h-4 mr-2" />

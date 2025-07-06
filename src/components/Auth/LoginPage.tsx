@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Eye, EyeOff, User, Lock, Phone, MessageSquare, CheckCircle, AlertCircle } from 'lucide-react';
+import { loginWithMobile, initializeAuth } from '../../services/auth';
 
 interface LoginPageProps {
   onLogin: (userData: any) => void;
@@ -19,6 +20,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [smsCountdown, setSmsCountdown] = useState(0);
   const [loginError, setLoginError] = useState('');
+
+  // 初始化认证状态
+  useEffect(() => {
+    initializeAuth();
+  }, []);
 
   // 验证码倒计时
   useEffect(() => {
@@ -94,21 +100,20 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     setIsLoading(true);
 
     try {
-      // 模拟登录API调用
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // 模拟登录验证
       if (loginType === 'password') {
-        if (formData.username === 'admin' && formData.password === '123456') {
-          onLogin({
-            name: '李老师',
-            role: '数学教师',
-            avatar: ''
-          });
-        } else {
-          setLoginError('用户名或密码错误');
-        }
+        // 使用真实的登录API
+        const loginResult = await loginWithMobile(formData.username, formData.password);
+        
+        // 登录成功，传递用户信息
+        onLogin({
+          name: '李老师',
+          role: '数学教师',
+          avatar: '',
+          accessToken: loginResult.accessToken,
+          userId: loginResult.userId
+        });
       } else {
+        // 短信登录暂时保持模拟逻辑
         if (formData.phone === '13800138000' && formData.smsCode === '123456') {
           onLogin({
             name: '李老师',
@@ -120,7 +125,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         }
       }
     } catch (error) {
-      setLoginError('登录失败，请稍后重试');
+      console.error('登录错误:', error);
+      if (error instanceof Error) {
+        setLoginError(error.message);
+      } else {
+        setLoginError('登录失败，请稍后重试');
+      }
     } finally {
       setIsLoading(false);
     }

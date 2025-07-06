@@ -20,15 +20,39 @@ function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [currentUser, setCurrentUser] = useState<any>(null);
 
+  // 检查是否已有有效的登录状态
+  useEffect(() => {
+    const savedToken = localStorage.getItem('accessToken');
+    const savedUser = localStorage.getItem('currentUser');
+    
+    if (savedToken && savedUser) {
+      try {
+        const userData = JSON.parse(savedUser);
+        setCurrentUser(userData);
+        setIsLoggedIn(true);
+      } catch (error) {
+        console.error('恢复用户状态失败:', error);
+        // 清除无效数据
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('currentUser');
+      }
+    }
+  }, []);
   const handleLogin = (userData: any) => {
     setCurrentUser(userData);
     setIsLoggedIn(true);
+    
+    // 保存用户信息到localStorage
+    localStorage.setItem('currentUser', JSON.stringify(userData));
   };
 
   const handleLogout = () => {
     setCurrentUser(null);
     setIsLoggedIn(false);
     setActiveTab('dashboard');
+    
+    // 清除本地存储的用户信息
+    localStorage.removeItem('currentUser');
   };
 
   if (!isLoggedIn) {
